@@ -1,48 +1,50 @@
-import Vue from 'vue'
-import App from './App.vue'
-import router from './router'
-import Axios from 'axios';
-import VueCookies from 'vue-cookies'
-import { BootstrapVue } from 'bootstrap-vue'
-import ErrorModal from './plugins/ErrorModal'
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-vue/dist/bootstrap-vue.css'
-import store from './store';
-import vuetify from './plugins/vuetify'
+import Vue from "vue";
+import App from "./App.vue";
+import router from "./router";
+import Axios from "axios";
+import VueCookies from "vue-cookies";
+import { BootstrapVue } from "bootstrap-vue";
+import ErrorModal from "./plugins/ErrorModal";
+import "bootstrap/dist/css/bootstrap.css";
+import "bootstrap-vue/dist/bootstrap-vue.css";
+import store from "./store";
+import vuetify from "./plugins/vuetify";
 
-
-Vue.use(ErrorModal)
-Vue.use(VueCookies)
-Vue.use(BootstrapVue)
-
+Vue.use(ErrorModal);
+Vue.use(VueCookies);
+Vue.use(BootstrapVue);
 
 router.beforeEach((to, from, next) => {
-  if (to.matched.some(record => record.meta.requiresAuth)) {
+  if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!store.state.isAuthenticated) {
       next({
-        name: 'Login',
-        query: { redirect: to.fullPath }
-      })
-    } else if (to.matched.some(record => record.meta.groups && !record.meta.groups.includes(store.state.user.role))) {
-      next(
-        {
-          name: "Index"
-        }
+        name: "Login",
+        query: { redirect: to.fullPath },
+      });
+    } else if (
+      to.matched.some(
+        (record) =>
+          record.meta.groups &&
+          !record.meta.groups.includes(store.state.user.role)
       )
+    ) {
+      next({
+        name: "Index",
+      });
     } else {
-      next()
+      next();
     }
   } else {
-    next()
+    next();
   }
-})
-Vue.config.productionTip = false
-store.dispatch('checkAuth').then(() => {
+});
+Vue.config.productionTip = false;
+store.dispatch("checkAuth").then(() => {
   new Vue({
     router,
     store: store,
     vuetify,
-    render: h => h(App)
-  }).$mount('#app')
-})
-Axios.defaults.headers.common['Content-Type'] = 'application/json';
+    render: (h) => h(App),
+  }).$mount("#app");
+});
+Axios.defaults.headers.common["Content-Type"] = "application/json";

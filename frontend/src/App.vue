@@ -20,6 +20,20 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+      <v-snackbar v-model="showSnackbar" color="success" :timeout="2000">
+        {{ snackbarText }}
+
+        <template v-slot:action="{ attrs }">
+          <v-btn
+            color="white"
+            text
+            v-bind="attrs"
+            @click="showSnackbar = false"
+          >
+            Закрыть
+          </v-btn>
+        </template>
+      </v-snackbar>
       <v-overlay :value="appLoading">
         <v-progress-circular indeterminate size="64"></v-progress-circular>
       </v-overlay>
@@ -28,6 +42,7 @@
 </template>
 
 <script>
+import { mapActions, mapMutations, mapState } from "vuex";
 import NavBar from "./components/NavBar.vue";
 import ErrorModal from "./plugins/ErrorModal";
 
@@ -41,12 +56,29 @@ export default {
       appLoading: true,
     };
   },
+  methods: {
+    ...mapActions(["getCategories"]),
+    ...mapMutations(["setShowSnackbar"]),
+  },
   async mounted() {
     ErrorModal.ErrorEvent.$on("show", (params) => {
       this.modalContent = params.data;
       this.showErrorModal = true;
     });
+    await this.getCategories();
     this.appLoading = false;
+  },
+  computed: {
+    ...mapState(["snackbarText"]),
+    ...mapState({ stateShoSnackbar: "showSnackbar" }),
+    showSnackbar: {
+      get() {
+        return this.stateShoSnackbar;
+      },
+      set(value) {
+        this.setShowSnackbar(value);
+      },
+    },
   },
 };
 </script>

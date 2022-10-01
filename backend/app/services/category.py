@@ -1,5 +1,9 @@
+from typing import Optional
+
 from fastapi import HTTPException
+from sqlalchemy.orm.query import Query
 from starlette import status
+from starlette import status as http_status
 
 from app import database, models
 from app.database.tables import Statuses
@@ -54,6 +58,20 @@ class CategoryService(BaseDBService):
 
     def get_all(self) -> list:
         return self.session.query(database.Category).all()
+
+    def get_categories_by_goods_name(self, name: Optional[str]) -> list:
+        if name is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Name query is required.",
+            )
+        goods_query: Query = (
+            self.session.query(database.Good.category_id)
+            .filter(database.Good.__ts_vector__.match(name, postgresql_regconfig="russian"))
+            .distinct()
+            .subquery()
+        )
+        return self.session.query(database.Category).filter(database.Category.id.in_(goods_query)).all()
 
     def update_status(self, category_id: int, new_status: Statuses):
         category: database.Category = self.session.query(database.Category).get(category_id)
