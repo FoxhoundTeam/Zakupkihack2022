@@ -1,6 +1,6 @@
 import pandas as pd
 
-from app.database import Category, Good, User, UserCategory, UsersGoods
+from app.database import Category, Good, User, UserCategory, UsersGoods, CategoryFilter
 from app.database.base import SessionLocal
 from app.database.tables import Roles, Statuses
 from app.services.category import CategoryService
