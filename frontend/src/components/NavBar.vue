@@ -4,7 +4,7 @@
       ><router-link
         :to="{ name: 'Index' }"
         class="text-decoration-none text-dark"
-        >FoxHound</router-link
+        >FoxТорг</router-link
       ></v-app-bar-title
     >
     <v-btn
