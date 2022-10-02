@@ -77,6 +77,7 @@ def fill_database(categories_file, companies_file, products_file):
             ]
         )
         session.commit()
+        auth_service = AuthService(session)
         auth_service.register_new_user(UserCreate(username="admin", password="admin"))
 
         actions = []
@@ -91,4 +92,3 @@ def fill_database(categories_file, companies_file, products_file):
 
         g_service.es.indices.refresh(index=g_service.index)
 
-        auth_service = AuthService(session)
