@@ -1,13 +1,13 @@
 <template>
   <div>
-    <v-row dense v-if="!search"
+    <v-row dense v-if="!search || selectedCategoryId"
       ><v-col cols="12"
         ><v-autocomplete
           outlined
           label="Категория"
           :items="categories.filter((v) => v.status == 'approved')"
           v-model="selectedCategoryId"
-          item-text="name"
+          :item-text="getCategoryName"
           item-value="id"
           clearable
         ></v-autocomplete></v-col
@@ -63,16 +63,25 @@ export default {
     },
   },
   methods: {
-    ...mapActions(["getGoods", "getGoodsCategories"]),
+    ...mapActions(["getGoods", "getGoodsCategories", "getPriceStats"]),
     ...mapMutations(["setSelectedCategoryId", "setGoodsFilters"]),
+    getCategoryName(category) {
+      if (category.name.length < 27) return category.name
+      return category.name.slice(0, 25) + "..."
+    }
   },
   watch: {
     async selectedCategoryId(value) {
       await this.getGoods();
       await this.getGoodsCategories();
+      await this.getPriceStats();
+      const query = { ...this.$route.query, category_id: value };
+      if (!value) {
+        delete query.category_id;
+      }
       this.$router.replace({
         name: "Search",
-        query: { ...this.$route.query, category_id: value },
+        query: query,
       });
     },
     $route(value) {

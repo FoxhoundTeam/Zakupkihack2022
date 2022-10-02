@@ -75,3 +75,8 @@ class GoodSearchCompanyResult(BaseModel):
     name: str
     description: str
     url: str
+
+
+class PriceStat(BaseModel):
+    labels: list[float]
+    data: list[float]

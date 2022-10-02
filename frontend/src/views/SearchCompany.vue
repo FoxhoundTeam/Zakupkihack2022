@@ -84,7 +84,9 @@ export default {
   computed: {
     ...mapState(["categories"]),
     length() {
-      return Math.round(this.companies.total / this.companies.size) + 1 || 1;
+      if (this.companies.total % this.companies.size == 0)
+        return this.companies.total / this.companies.size;
+      return parseInt(this.companies.total / this.companies.size) + 1 || 1;
     },
   },
   methods: {

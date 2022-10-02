@@ -25,6 +25,7 @@ const store = new Vuex.Store({
     snackbarText: "",
     loadingGoods: false,
     loadingGoodsCategories: false,
+    priceStats: {},
   },
   getters: {
     categoryById: (state) => (id) => {
@@ -90,6 +91,9 @@ const store = new Vuex.Store({
     setGoodsCategories(state, value) {
       state.goodsCategories = value;
     },
+    setPriceStats(state, value) {
+        state.priceStats = value;
+    }
   },
   actions: {
     async getCategories(context) {
@@ -132,15 +136,30 @@ const store = new Vuex.Store({
     async getGoodsCategories(context) {
       if (!context.state.search || context.state.selectedCategoryId) {
         context.commit("setGoodsCategories", []);
+        return
       }
       context.commit("setLoadingGoodsCategories", true);
       const response = await http.getList(
         "CategoriesByGoodName",
-        { name: context.state.name },
+        { name: context.state.search },
         true
       );
       context.commit("setGoodsCategories", response.data);
       context.commit("setLoadingGoodsCategories", false);
+    },
+    async getPriceStats(context) {
+        if (!context.state.selectedCategoryId) {
+            context.commit("setPriceStats", {})
+            return
+        }
+        const filters = {category_id: context.state.selectedCategoryId}
+        if (context.state.search) filters.name = context.state.search
+        const response = await http.getList(
+            "PriceStats",
+            filters,
+            true
+        );
+        context.commit("setPriceStats", response.data)
     },
     async addItem(context, data) {
       let item_data = data.data;

@@ -1,16 +1,14 @@
-from typing import Optional
-
 from fastapi import HTTPException
 from sqlalchemy.orm.query import Query
 from starlette import status
-from starlette import status as http_status
 
 from app import database, models
 from app.database.tables import Statuses
 from app.services.base import BaseDBService
+from app.services.goods_elasticserach_mixin import GoodsElasticsearchMixin
 
 
-class CategoryService(BaseDBService):
+class CategoryService(BaseDBService, GoodsElasticsearchMixin):
     def create_category(self, category_data: models.CategoryCreate) -> database.Category:
         if (
             self.session.query(database.Category).filter(database.Category.name == category_data.name).first()
@@ -56,18 +54,13 @@ class CategoryService(BaseDBService):
         self.session.refresh(category)
         return category
 
-    def get_all(self) -> list:
+    def get_all(self) -> list[database.Category]:
         return self.session.query(database.Category).all()
 
-    def get_categories_by_goods_name(self, name: Optional[str]) -> list:
-        if name is None:
-            raise HTTPException(
-                status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="Name query is required.",
-            )
+    def get_categories_by_goods_name(self, name: str) -> list:
         goods_query: Query = (
             self.session.query(database.Good.category_id)
-            .filter(database.Good.__ts_vector__.match(name, postgresql_regconfig="russian"))
+            .filter(database.Good.id.in_(self.es_get_ids_by_q(name)))
             .distinct()
             .subquery()
         )

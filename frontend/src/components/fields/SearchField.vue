@@ -78,12 +78,12 @@ export default {
     },
   },
   watch: {
-    async search(value) {
+    async searchInput(value) {
       if (
         !value ||
         value == this.$route.query.q ||
         this.isLoading ||
-        value.length < 3
+        value.length < 2
       ) {
         return;
       }

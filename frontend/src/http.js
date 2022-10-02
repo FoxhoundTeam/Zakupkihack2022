@@ -10,6 +10,7 @@ export default {
     Autocomplete: "/api/good/autocomplete/",
     SearchCompanies: "/api/companies/search/",
     CategoriesByGoodName: "/api/good/categories/",
+    PriceStats: "/api/good/stats/",
   },
   getFilterValues: async function (filters) {
     var filter = "";

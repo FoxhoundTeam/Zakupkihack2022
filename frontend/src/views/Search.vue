@@ -5,6 +5,7 @@
       :categories="goodsCategories"
       :loading="loadingGoodsCategories"
     />
+    <price-chart v-if="selectedCategoryId && priceStats.labels" :labels="priceStats.labels" :data="priceStats.data"/>
     <v-row v-if="length > 1">
       <v-col cols="4"> &nbsp;</v-col>
       <v-col>
@@ -51,24 +52,23 @@
 import FilterLeftSide from "@/components/FilterLeftSide.vue";
 import ListGoodCard from "@/components/cards/ListGoodCard.vue";
 import Categories from "../components/Categories.vue";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapMutations, mapState } from "vuex";
+import PriceChart from '@/components/PriceChart.vue';
 export default {
   components: {
     FilterLeftSide,
     ListGoodCard,
     Categories,
-  },
-  data() {
-    return {
-      page: 1,
-    };
+    PriceChart,
   },
   async mounted() {
     if (this.$route.query.page) {
       this.page = Number(this.$route.query.page);
+    } else {
+      await this.getGoods(this.page);
     }
-    await this.getGoods();
     await this.getGoodsCategories();
+    await this.getPriceStats();
   },
   computed: {
     ...mapState([
@@ -78,13 +78,26 @@ export default {
       "loadingGoodsCategories",
       "goodsCategories",
       "selectedCategoryId",
+      "goodsPage",
+      "priceStats",
     ]),
     length() {
-      return Math.round(this.goods.total / this.goods.size) + 1 || 1;
+      if (this.goods.total % this.goods.size == 0)
+        return this.goods.total / this.goods.size;
+      return parseInt(this.goods.total / this.goods.size) + 1 || 1;
+    },
+    page: {
+      get() {
+        return this.goodsPage;
+      },
+      set(value) {
+        this.setGoodsPage(value);
+      },
     },
   },
   methods: {
-    ...mapActions(["getGoods", "getGoodsCategories"]),
+    ...mapActions(["getGoods", "getGoodsCategories", "getPriceStats"]),
+    ...mapMutations(["setGoodsPage"]),
   },
   watch: {
     async search(value) {
@@ -93,18 +106,19 @@ export default {
         query: { ...this.$route.query, q: value },
       });
       if (this.page == 1) {
-        await this.getGoods();
+        await this.getGoods(this.page);
       } else {
         this.page = 1;
       }
       await this.getGoodsCategories();
+      await this.getPriceStats();
     },
     async page(value) {
-      await this.getGoods();
       this.$router.push({
         name: "Search",
         query: { ...this.$route.query, page: value },
       });
+      await this.getGoods(value);
     },
   },
 };

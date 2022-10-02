@@ -2,6 +2,7 @@ import re
 from collections import defaultdict
 from typing import Optional
 
+import numpy as np
 from fastapi import HTTPException, Request
 from sqlalchemy import Integer, and_, cast, func, or_
 from sqlalchemy.orm.query import Query
@@ -9,12 +10,13 @@ from starlette import status as http_status
 
 from .. import database, models
 from ..database.tables import Statuses, Types
-from ..models.good import GoodFilterValue
+from ..models.good import GoodFilterValue, PriceStat
 from ..utils import get_or_404
 from .base import BaseDBService
+from .goods_elasticserach_mixin import GoodsElasticsearchMixin
 
 
-class GoodService(BaseDBService):
+class GoodService(BaseDBService, GoodsElasticsearchMixin):
     def get_all(self, status: Optional[Statuses], category_id: Optional[int]) -> list[database.Good]:
         query = self.session.query(database.Good)
         if status:
@@ -90,12 +92,22 @@ class GoodService(BaseDBService):
         if request.query_params:
             query = self._get_filtered_query(query, request)
         if name:
-            query = query.filter(database.Good.__ts_vector__.match(name, postgresql_regconfig="russian"))
+            query = query.filter(database.Good.id.in_(self.es_get_ids_by_q(name)))
         if category_id:
             query = query.filter(database.Good.category_id == category_id)
         if status:
             query = query.filter(database.Good.status == status)
         return query
+
+    def get_price_stats(self, category_id: int, name: Optional[str]) -> PriceStat:
+        query: Query = self.session.query(database.Good).filter(database.Good.category_id == category_id)
+        if name:
+            query = query.filter(database.Good.id.in_(self.es_get_ids_by_q(name)))
+        prices = query.join(database.Good.users).values(database.UsersGoods.price)
+        if not prices:
+            return PriceStat(labels=[], data=[])
+        data, labels = np.histogram([price[0] for price in prices], bins=4)
+        return PriceStat(labels=list(labels), data=list(data))
 
     def _update_category_filters(self, props: list[GoodFilterValue]):
         category_filters: list[database.CategoryFilter] = (
@@ -122,6 +134,7 @@ class GoodService(BaseDBService):
         self.session.commit()
         self._update_category_filters(good_data.props)
         self.session.refresh(good)
+        self.es_create_good(good)
         return good
 
     def update_good(self, good_id: int, good_data: models.GoodUpdate) -> database.Good:
@@ -153,15 +166,16 @@ class GoodService(BaseDBService):
             )
         return good
 
-    def get_autocomplete_names(self, substr: str, limit: int = 10) -> list[str]:
-        subquery = (
-            self.session.query(func.regexp_split_to_table(database.Good.name, r"\s+").label("sub_name"))
-            .filter(database.Good.status == Statuses.approved)
-            .distinct()
-            .subquery()
-        )
-        query = self.session.query(subquery).filter(subquery.c.sub_name.ilike(f"%{substr}%")).limit(limit).all()
-        return [r[0] for r in query]
+    def get_autocomplete_names(self, substr: str) -> list[str]:
+        # subquery = (
+        #     self.session.query(func.regexp_split_to_table(database.Good.name, r"\s+").label("sub_name"))
+        #     .filter(database.Good.status == Statuses.approved)
+        #     .distinct()
+        #     .subquery()
+        # )
+        # query = self.session.query(subquery).filter(subquery.c.sub_name.ilike(f"%{substr}%")).limit(limit).all()
+        # return [r[0] for r in query]
+        return self.es_autocomplete(substr)
 
     def update_status(self, good_id: int, new_status: Statuses):
         good: database.Good = get_or_404(self.session, database.Good, good_id)

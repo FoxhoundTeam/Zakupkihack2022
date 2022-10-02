@@ -7,6 +7,7 @@ from starlette import status as http_status
 
 from app import models
 from app.database.tables import Statuses
+from app.models.good import PriceStat
 from app.services.category import CategoryService
 from app.services.good import GoodService
 
@@ -36,9 +37,18 @@ def get_goods(
     return paginate(good_service.get_query(name, category_id, status, request))
 
 
+@router.get("/stats/", response_model=PriceStat)
+def get_goods_stats(
+    category_id: int,
+    name: Optional[str] = None,
+    good_service: GoodService = Depends(),
+):
+    return good_service.get_price_stats(category_id, name)
+
+
 @router.get("/categories/", response_model=list[models.Category])
 def get_categories(
-    name: Optional[str] = None,
+    name: str,
     category_service: CategoryService = Depends(),
 ):
     return category_service.get_categories_by_goods_name(name)
