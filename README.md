@@ -97,8 +97,6 @@ sudo docker-compose exec backend ipython
 ```
 
 # Состав команды Foxhound на MoscowCityHack 2022
-  - Недогарок Антон (капитан, ML/NLP) [nk260an@gmail.com]
-  - Перевозникова Ксения (web scraping, прикладная python-разработка, ML/NLP)
-  - Петров Антон (фронтенд, Vuetify)
-  - Романчук Юрий (бекенд, FastAPI)
-  - Семенников Кирилл (web scraping, прикладная python-разработка)
+  - Недогарок Антон (капитан, анализ данных) [nk260an@gmail.com]
+  - Петров Антон (фуллстек, Vuetify)
+  - Файзуллин Фарис (анализ данных)
