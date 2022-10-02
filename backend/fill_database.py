@@ -1,12 +1,14 @@
+import json
+
 import pandas as pd
 
-from app.database import Category, Good, User, UserCategory, UsersGoods, CategoryFilter
+from app.database import Category, CategoryFilter, Good, User, UserCategory, UsersGoods
 from app.database.base import SessionLocal
 from app.database.tables import Roles, Statuses
-from app.services.category import CategoryService
-from app.services.auth import AuthService
-from app.services.good import GoodService
 from app.models.auth import UserCreate
+from app.services.auth import AuthService
+from app.services.category import CategoryService
+from app.services.good import GoodService
 from app.services.user import UserService
 
 
@@ -92,3 +94,26 @@ def fill_database(categories_file, companies_file, products_file):
 
         g_service.es.indices.refresh(index=g_service.index)
 
+
+def fill_filters(filename):
+    def load_variants(v):
+        return json.loads(v.replace("'", '"').replace("\\", ""))
+
+    filters = pd.read_csv(filename, delimiter=";", index_col=0)
+    filters.variants = filters.variants.apply(load_variants)
+    with SessionLocal() as session:
+        c_service = CategoryService(session)
+        categories = {category.name: category for category in c_service.get_all()}
+        session.add_all(
+            [
+                CategoryFilter(
+                    label=f["filter_name"],
+                    type="checkbox",
+                    category_id=categories[f["okpd2_code"]].id,
+                    choices=f["variants"],
+                )
+                for _, f in filters.iterrows()
+                if categories.get(f["okpd2_code"])
+            ]
+        )
+        session.commit()

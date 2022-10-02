@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.query import Query
 from starlette import status
 
@@ -55,7 +56,7 @@ class CategoryService(BaseDBService, GoodsElasticsearchMixin):
         return category
 
     def get_all(self) -> list[database.Category]:
-        return self.session.query(database.Category).all()
+        return self.session.query(database.Category).options(joinedload(database.Category.filters)).all()
 
     def get_categories_by_goods_name(self, name: str) -> list:
         goods_query: Query = (

@@ -167,14 +167,6 @@ class GoodService(BaseDBService, GoodsElasticsearchMixin):
         return good
 
     def get_autocomplete_names(self, substr: str) -> list[str]:
-        # subquery = (
-        #     self.session.query(func.regexp_split_to_table(database.Good.name, r"\s+").label("sub_name"))
-        #     .filter(database.Good.status == Statuses.approved)
-        #     .distinct()
-        #     .subquery()
-        # )
-        # query = self.session.query(subquery).filter(subquery.c.sub_name.ilike(f"%{substr}%")).limit(limit).all()
-        # return [r[0] for r in query]
         return self.es_autocomplete(substr)
 
     def update_status(self, good_id: int, new_status: Statuses):
