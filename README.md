@@ -1,3 +1,5 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 # FoxТорг
 Площадка для поиска и аналитики по товарам, работам, услугам (ТРУ) для производителей/поставщиков и заказчиков. Решение команды Foxhound на хакатоне Zakupki Hack 2022
 
